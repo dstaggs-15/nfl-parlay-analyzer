@@ -151,7 +151,71 @@ def predict_game(team_a: str, team_b: str, ratings: Dict[str, float], k: float =
     return logistic(diff, k=k)
 
 
-def evaluate_parlay(legs: Iterable[Tuple[str, str]], ratings: Dict[str, float], k: float = 0.25) -> Tuple[List[float], float]:
+def predict_game_advanced(
+    team_a: str,
+    team_b: str,
+    metrics: Dict[str, Dict[str, float]],
+    coeffs: List[float],
+    intercept: float,
+) -> float:
+    """Predict the probability that team_a beats team_b using the advanced model.
+
+    The advanced model is a logistic regression trained on game outcomes with
+    three features: the difference in overall team strength (offense + defense
+    ratings), the difference between team A's offense and team B's defense,
+    and the difference between team A's defense and team B's offense.  The
+    function computes these features from the provided metrics and applies
+    the logistic regression coefficients and intercept to obtain a win
+    probability.
+
+    Parameters
+    ----------
+    team_a: str
+        Abbreviation of the first team (betting team).
+    team_b: str
+        Abbreviation of the opponent team.
+    metrics: Dict[str, Dict[str, float]]
+        Per-team metrics including offense_rating and defense_rating.
+    coeffs: List[float]
+        Logistic regression coefficients (length must match number of features).
+    intercept: float
+        Logistic regression intercept.
+
+    Returns
+    -------
+    float
+        Estimated win probability for team_a.
+    """
+    if team_a not in metrics:
+        raise ValueError(f"Team '{team_a}' not found in metrics.")
+    if team_b not in metrics:
+        raise ValueError(f"Team '{team_b}' not found in metrics.")
+    # Compute features
+    teamA = metrics[team_a]
+    teamB = metrics[team_b]
+    rating_diff = (teamA['offense_rating'] + teamA['defense_rating']) - (
+        teamB['offense_rating'] + teamB['defense_rating']
+    )
+    offense_diff = teamA['offense_rating'] - teamB['defense_rating']
+    defense_diff = teamA['defense_rating'] - teamB['offense_rating']
+    features = [rating_diff, offense_diff, defense_diff]
+    # Linear combination
+    z = intercept + sum(c * f for c, f in zip(coeffs, features))
+    # Logistic
+    prob = 1.0 / (1.0 + math.exp(-z))
+    return prob
+
+
+def evaluate_parlay(
+    legs: Iterable[Tuple[str, str]],
+    ratings: Dict[str, float] | None = None,
+    k: float = 0.25,
+    *,
+    advanced: bool = False,
+    metrics: Dict[str, Dict[str, float]] | None = None,
+    coeffs: List[float] | None = None,
+    intercept: float | None = None,
+) -> Tuple[List[float], float]:
     """Evaluate a parlay composed of multiple game legs.
 
     Each leg is represented as a tuple `(team_a, team_b)`, corresponding to a
@@ -163,10 +227,18 @@ def evaluate_parlay(legs: Iterable[Tuple[str, str]], ratings: Dict[str, float], 
     ----------
     legs: Iterable[Tuple[str, str]]
         A sequence of (team_a, team_b) pairs.
-    ratings: Dict[str, float]
-        Team ratings for the season.
+    ratings: Dict[str, float], optional
+        Team ratings for the simple model (required if ``advanced`` is False).
     k: float, optional
-        Logistic scale factor.
+        Logistic scale factor for the simple model; default 0.25.
+    advanced: bool, optional
+        Whether to use the advanced model based on offensive/defensive metrics.
+    metrics: Dict[str, Dict[str, float]], optional
+        Per-team metrics (offense_rating, defense_rating, etc.) for advanced model.
+    coeffs: List[float], optional
+        Coefficients for the logistic regression in the advanced model.
+    intercept: float, optional
+        Intercept term for the advanced model.
 
     Returns
     -------
@@ -177,7 +249,14 @@ def evaluate_parlay(legs: Iterable[Tuple[str, str]], ratings: Dict[str, float], 
     probs: List[float] = []
     combined = 1.0
     for team_a, team_b in legs:
-        p = predict_game(team_a, team_b, ratings, k=k)
+        if advanced:
+            if metrics is None or coeffs is None or intercept is None:
+                raise ValueError("Advanced model selected but metrics/coeffs/intercept not provided.")
+            p = predict_game_advanced(team_a, team_b, metrics, coeffs, intercept)
+        else:
+            if ratings is None:
+                raise ValueError("Simple model selected but ratings are not provided.")
+            p = predict_game(team_a, team_b, ratings, k=k)
         probs.append(p)
         combined *= p
     return probs, combined
@@ -213,8 +292,43 @@ def parse_legs(legs_str: str) -> List[Tuple[str, str]]:
     return legs
 
 
+def load_advanced_metrics(path: str) -> Tuple[Dict[str, Dict[str, float]], List[float], float]:
+    """Load advanced team metrics and logistic regression parameters from JSON.
+
+    The JSON file must contain a top-level object with keys:
+    ``metrics`` (a dict of per-team metric dicts), ``coefficients`` (a list of floats),
+    and ``intercept`` (a float).
+
+    Parameters
+    ----------
+    path: str
+        Path to the JSON file with advanced model parameters.
+
+    Returns
+    -------
+    Tuple[metrics, coefficients, intercept]
+        ``metrics`` is a dict mapping team abbreviations to metric dicts,
+        ``coefficients`` is a list of floats, and ``intercept`` is a float.
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Advanced metrics file not found at {path}")
+    with open(path, 'r') as f:
+        data = json.load(f)
+    metrics = data.get('metrics')
+    coeffs = data.get('coefficients')
+    intercept = data.get('intercept')
+    if metrics is None or coeffs is None or intercept is None:
+        raise ValueError("Advanced metrics file missing required keys: 'metrics', 'coefficients', 'intercept'")
+    return metrics, coeffs, float(intercept)
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate NFL parlays using a simple logistic model.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Evaluate NFL parlays using either a simple rating-based model or "
+            "an advanced logistic regression model trained on offensive and defensive metrics."
+        )
+    )
     parser.add_argument(
         '--csv',
         type=str,
@@ -239,11 +353,41 @@ def main() -> None:
         default=0.25,
         help="Logistic scale factor controlling steepness."
     )
+
+    parser.add_argument(
+        '--model',
+        choices=['simple', 'advanced'],
+        default='simple',
+        help=(
+            "Which model to use for predictions: 'simple' uses average point differential per game, "
+            "while 'advanced' uses a logistic regression trained on offensive/defensive ratings."
+        ),
+    )
+    parser.add_argument(
+        '--advanced-json',
+        type=str,
+        default=os.path.join(os.path.dirname(__file__), '..', 'advanced_ratings.json'),
+        help=(
+            "Path to a JSON file containing advanced metrics and model parameters. "
+            "Used only when --model=advanced."
+        ),
+    )
     args = parser.parse_args()
 
     # Load data and compute ratings
     df = load_games(args.csv)
     ratings = compute_team_ratings(df, args.season)
+
+    # If using advanced model, load metrics and model parameters
+    metrics: Dict[str, Dict[str, float]] | None = None
+    coeffs: List[float] | None = None
+    intercept: float | None = None
+    if args.model == 'advanced':
+        try:
+            metrics, coeffs, intercept = load_advanced_metrics(args.advanced_json)
+        except Exception as e:
+            print(f"Error loading advanced metrics: {e}")
+            return
 
     # If no legs were provided, show available teams and exit
     if not args.legs:
@@ -263,7 +407,24 @@ def main() -> None:
         print("No valid legs provided.")
         return
 
-    probs, combined = evaluate_parlay(legs, ratings, k=args.k)
+    # Evaluate parlay using selected model
+    if args.model == 'advanced':
+        probs, combined = evaluate_parlay(
+            legs,
+            ratings=None,
+            advanced=True,
+            metrics=metrics,
+            coeffs=coeffs,
+            intercept=intercept,
+        )
+    else:
+        probs, combined = evaluate_parlay(
+            legs,
+            ratings=ratings,
+            k=args.k,
+            advanced=False,
+        )
+
     for (team_a, team_b), p in zip(legs, probs):
         print(f"Probability {team_a} beats {team_b}: {p:.3f}")
     print(f"Combined parlay probability: {combined:.3f}")
