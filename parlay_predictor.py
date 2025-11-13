@@ -158,52 +158,131 @@ def predict_game_advanced(
     coeffs: List[float],
     intercept: float,
 ) -> float:
-    """Predict the probability that team_a beats team_b using the advanced model.
+    """Predict the probability that ``team_a`` beats ``team_b`` using the advanced model.
 
-    The advanced model is a logistic regression trained on game outcomes with
-    three features: the difference in overall team strength (offense + defense
-    ratings), the difference between team A's offense and team B's defense,
-    and the difference between team A's defense and team B's offense.  The
-    function computes these features from the provided metrics and applies
-    the logistic regression coefficients and intercept to obtain a win
-    probability.
+    This function implements a logistic regression model that uses three
+    handcrafted features derived from offensive and defensive ratings:
+
+    * ``rating_diff`` – the difference in total team strength, defined as
+      ``(offense_rating + defense_rating)`` for the two teams.
+    * ``offense_diff`` – the difference between team A's offense and team B's
+      defensive rating.
+    * ``defense_diff`` – the difference between team A's defensive rating and
+      team B's offensive rating.
+
+    The provided coefficients and intercept should match this feature vector in
+    length.  If the coefficient list is longer than three elements, any
+    additional features will be ignored (to maintain backward compatibility
+    with older JSON files).
 
     Parameters
     ----------
     team_a: str
-        Abbreviation of the first team (betting team).
+        Abbreviation of the first team (the team you're betting on).
     team_b: str
         Abbreviation of the opponent team.
     metrics: Dict[str, Dict[str, float]]
-        Per-team metrics including offense_rating and defense_rating.
+        Per-team metrics containing at least ``offense_rating`` and
+        ``defense_rating`` for each team.
     coeffs: List[float]
-        Logistic regression coefficients (length must match number of features).
+        Logistic regression coefficients.  Only the first three are used
+        by this function.
     intercept: float
         Logistic regression intercept.
 
     Returns
     -------
     float
-        Estimated win probability for team_a.
+        Estimated probability that team_a wins the matchup.
     """
     if team_a not in metrics:
         raise ValueError(f"Team '{team_a}' not found in metrics.")
     if team_b not in metrics:
         raise ValueError(f"Team '{team_b}' not found in metrics.")
-    # Compute features
     teamA = metrics[team_a]
     teamB = metrics[team_b]
+    # Construct the feature vector
     rating_diff = (teamA['offense_rating'] + teamA['defense_rating']) - (
         teamB['offense_rating'] + teamB['defense_rating']
     )
     offense_diff = teamA['offense_rating'] - teamB['defense_rating']
     defense_diff = teamA['defense_rating'] - teamB['offense_rating']
     features = [rating_diff, offense_diff, defense_diff]
-    # Linear combination
-    z = intercept + sum(c * f for c, f in zip(coeffs, features))
-    # Logistic
+    # Use only as many coefficients as we have features
+    coeffs_trim = coeffs[: len(features)]
+    z = intercept + sum(c * f for c, f in zip(coeffs_trim, features))
     prob = 1.0 / (1.0 + math.exp(-z))
     return prob
+
+
+def predict_game_enhanced(
+    team_a: str,
+    team_b: str,
+    metrics: Dict[str, Dict[str, float]],
+    coeffs: List[float],
+    intercept: float,
+) -> float:
+    """Predict the probability that ``team_a`` beats ``team_b`` using the enhanced model.
+
+    The enhanced model extends the advanced model by incorporating additional
+    per-team statistics beyond offense and defense ratings.  By default it
+    considers the following four features:
+
+    * ``rating`` – point differential per game for the season.
+    * ``offense`` – average points scored per game.
+    * ``defense`` – negative average points allowed per game (so higher is better).
+    * ``last3`` – average point differential over the team's last three games.
+
+    The prediction is computed by taking the difference of these metrics between
+    team A and team B.  If the list of coefficients has more than four
+    elements, any additional coefficients are applied to zero-valued features,
+    allowing compatibility with models trained on more features (e.g., rest
+    days, spread lines, moneylines, etc.) without requiring those inputs at
+    prediction time.  This means that the extra features simply contribute
+    nothing (because their values are assumed zero) but the intercept and
+    existing coefficients are still used.
+
+    Parameters
+    ----------
+    team_a: str
+        Abbreviation of the team you are betting on.
+    team_b: str
+        Abbreviation of the opposing team.
+    metrics: Dict[str, Dict[str, float]]
+        Dictionary mapping team abbreviations to their per-team metrics.  Each
+        metric dict must include ``rating``, ``offense``, ``defense`` and
+        ``last3``.
+    coeffs: List[float]
+        Logistic regression coefficients.  The first four correspond to the
+        feature differences described above.  Any additional coefficients are
+        ignored unless you pass in explicit values for those features (which
+        this function does not currently do).
+    intercept: float
+        Logistic regression intercept.
+
+    Returns
+    -------
+    float
+        Estimated probability that ``team_a`` wins.
+    """
+    if team_a not in metrics:
+        raise ValueError(f"Team '{team_a}' not found in metrics.")
+    if team_b not in metrics:
+        raise ValueError(f"Team '{team_b}' not found in metrics.")
+    mA = metrics[team_a]
+    mB = metrics[team_b]
+    # Basic features: rating, offense, defense, last3 differences
+    features = [
+        mA.get('rating', 0) - mB.get('rating', 0),
+        mA.get('offense', 0) - mB.get('offense', 0),
+        mA.get('defense', 0) - mB.get('defense', 0),
+        mA.get('last3', 0) - mB.get('last3', 0),
+    ]
+    # Pad feature vector with zeros if the coefficient list is longer
+    if len(coeffs) > len(features):
+        features += [0.0] * (len(coeffs) - len(features))
+    z = intercept + sum(c * f for c, f in zip(coeffs, features))
+    return 1.0 / (1.0 + math.exp(-z))
 
 
 def evaluate_parlay(
@@ -212,6 +291,7 @@ def evaluate_parlay(
     k: float = 0.25,
     *,
     advanced: bool = False,
+    enhanced: bool = False,
     metrics: Dict[str, Dict[str, float]] | None = None,
     coeffs: List[float] | None = None,
     intercept: float | None = None,
@@ -226,19 +306,25 @@ def evaluate_parlay(
     Parameters
     ----------
     legs: Iterable[Tuple[str, str]]
-        A sequence of (team_a, team_b) pairs.
+        A sequence of (team_a, team_b) pairs representing each leg of the parlay.
     ratings: Dict[str, float], optional
-        Team ratings for the simple model (required if ``advanced`` is False).
+        Team ratings for the simple model (required if neither ``advanced`` nor
+        ``enhanced`` is True).
     k: float, optional
         Logistic scale factor for the simple model; default 0.25.
     advanced: bool, optional
-        Whether to use the advanced model based on offensive/defensive metrics.
+        Whether to use the advanced model based on offensive/defensive ratings.  If
+        set, you must also provide ``metrics``, ``coeffs`` and ``intercept``.
+    enhanced: bool, optional
+        Whether to use the enhanced model which operates on per-team metrics
+        (rating, offense, defense, last3) and logistic regression parameters.  As
+        with ``advanced``, you must supply ``metrics``, ``coeffs`` and ``intercept``.
     metrics: Dict[str, Dict[str, float]], optional
-        Per-team metrics (offense_rating, defense_rating, etc.) for advanced model.
+        Per-team metrics for the advanced or enhanced model.
     coeffs: List[float], optional
-        Coefficients for the logistic regression in the advanced model.
+        Coefficients for the logistic regression in the advanced or enhanced model.
     intercept: float, optional
-        Intercept term for the advanced model.
+        Intercept term for the advanced or enhanced model.
 
     Returns
     -------
@@ -249,9 +335,17 @@ def evaluate_parlay(
     probs: List[float] = []
     combined = 1.0
     for team_a, team_b in legs:
-        if advanced:
+        if enhanced:
             if metrics is None or coeffs is None or intercept is None:
-                raise ValueError("Advanced model selected but metrics/coeffs/intercept not provided.")
+                raise ValueError(
+                    "Enhanced model selected but metrics/coeffs/intercept not provided."
+                )
+            p = predict_game_enhanced(team_a, team_b, metrics, coeffs, intercept)
+        elif advanced:
+            if metrics is None or coeffs is None or intercept is None:
+                raise ValueError(
+                    "Advanced model selected but metrics/coeffs/intercept not provided."
+                )
             p = predict_game_advanced(team_a, team_b, metrics, coeffs, intercept)
         else:
             if ratings is None:
@@ -356,11 +450,12 @@ def main() -> None:
 
     parser.add_argument(
         '--model',
-        choices=['simple', 'advanced'],
+        choices=['simple', 'advanced', 'enhanced'],
         default='simple',
         help=(
-            "Which model to use for predictions: 'simple' uses average point differential per game, "
-            "while 'advanced' uses a logistic regression trained on offensive/defensive ratings."
+            "Which model to use for predictions: 'simple' uses average point differential per game; "
+            "'advanced' uses a logistic regression trained on offensive/defensive ratings; and "
+            "'enhanced' uses a logistic regression trained on per-team metrics (rating, offense, defense, last3)."
         ),
     )
     parser.add_argument(
@@ -372,21 +467,31 @@ def main() -> None:
             "Used only when --model=advanced."
         ),
     )
+    parser.add_argument(
+        '--enhanced-json',
+        type=str,
+        default=os.path.join(os.path.dirname(__file__), '..', 'enhanced_ratings.json'),
+        help=(
+            "Path to a JSON file containing enhanced metrics and model parameters. "
+            "Used only when --model=enhanced."
+        ),
+    )
     args = parser.parse_args()
 
     # Load data and compute ratings
     df = load_games(args.csv)
     ratings = compute_team_ratings(df, args.season)
 
-    # If using advanced model, load metrics and model parameters
+    # If using advanced or enhanced models, load metrics and model parameters
     metrics: Dict[str, Dict[str, float]] | None = None
     coeffs: List[float] | None = None
     intercept: float | None = None
-    if args.model == 'advanced':
+    if args.model in ('advanced', 'enhanced'):
+        json_path = args.advanced_json if args.model == 'advanced' else args.enhanced_json
         try:
-            metrics, coeffs, intercept = load_advanced_metrics(args.advanced_json)
+            metrics, coeffs, intercept = load_advanced_metrics(json_path)
         except Exception as e:
-            print(f"Error loading advanced metrics: {e}")
+            print(f"Error loading {args.model} metrics: {e}")
             return
 
     # If no legs were provided, show available teams and exit
@@ -408,10 +513,21 @@ def main() -> None:
         return
 
     # Evaluate parlay using selected model
-    if args.model == 'advanced':
+    if args.model == 'enhanced':
         probs, combined = evaluate_parlay(
             legs,
             ratings=None,
+            k=args.k,
+            enhanced=True,
+            metrics=metrics,
+            coeffs=coeffs,
+            intercept=intercept,
+        )
+    elif args.model == 'advanced':
+        probs, combined = evaluate_parlay(
+            legs,
+            ratings=None,
+            k=args.k,
             advanced=True,
             metrics=metrics,
             coeffs=coeffs,
