@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFL Parlay Probability Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>NFL Parlay Probability Calculator</h1>
+    <p>Enter the legs of your parlay to see the estimated probability of each leg and the combined parlay hit rate.</p>
+  </header>
+
+  <main>
+    <div id="legs-container">
+      <!-- Leg inputs will be appended here dynamically -->
+    </div>
+    <button id="add-leg">Add Leg</button>
+    <button id="calculate">Calculate</button>
+
+    <section id="results" style="display:none;">
+      <h2>Results</h2>
+      <div id="individual-results"></div>
+      <p id="combined-result"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>This tool uses a simple logistic model based on point differentials per game.  It is for entertainment purposes only and does not guarantee results.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
