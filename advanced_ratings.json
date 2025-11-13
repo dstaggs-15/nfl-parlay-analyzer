@@ -1,0 +1,298 @@
+{
+  "coefficients": [
+    0.08270073139293148,
+    0.03351514547341789,
+    0.04918558591951354
+  ],
+  "intercept": -0.011788283945040034,
+  "metrics": {
+    "KC": {
+      "offense_rating": 3.309981684981686,
+      "defense_rating": 2.0404456654456666,
+      "home_offense": 26.17241379310345,
+      "home_defense": 18.775862068965516,
+      "away_offense": 26.647058823529413,
+      "away_defense": 22.784313725490197,
+      "games": 117
+    },
+    "ATL": {
+      "offense_rating": -1.953029231494579,
+      "defense_rating": -1.1360796793965093,
+      "home_offense": 23.065217391304348,
+      "home_defense": 23.391304347826086,
+      "away_offense": 18.95744680851064,
+      "away_defense": 25.27659574468085,
+      "games": 101
+    },
+    "BAL": {
+      "offense_rating": 2.535052910052908,
+      "defense_rating": 2.6871693121693134,
+      "home_offense": 26.84,
+      "home_defense": 19.72,
+      "away_offense": 24.6,
+      "away_defense": 20.44,
+      "games": 108
+    },
+    "BUF": {
+      "offense_rating": 5.50595238095238,
+      "defense_rating": 2.3869047619047628,
+      "home_offense": 29.928571428571427,
+      "home_defense": 19.107142857142858,
+      "away_offense": 27.583333333333332,
+      "away_defense": 21.791666666666668,
+      "games": 112
+    },
+    "CAR": {
+      "offense_rating": -3.9035242809995303,
+      "defense_rating": -2.0073668081093814,
+      "home_offense": 19.46808510638298,
+      "home_defense": 23.48936170212766,
+      "away_offense": 17.872340425531913,
+      "away_defense": 26.5531914893617,
+      "games": 101
+    },
+    "DET": {
+      "offense_rating": 3.291666666666668,
+      "defense_rating": -2.291666666666668,
+      "home_offense": 29.612244897959183,
+      "home_defense": 25.816326530612244,
+      "away_offense": 23.520833333333332,
+      "away_defense": 25.208333333333332,
+      "games": 105
+    },
+    "JAX": {
+      "offense_rating": -2.677820157189089,
+      "defense_rating": -1.8464516874711059,
+      "home_offense": 19.916666666666668,
+      "home_defense": 22.875,
+      "away_offense": 20.425531914893618,
+      "away_defense": 27.319148936170212,
+      "games": 103
+    },
+    "MIN": {
+      "offense_rating": 0.9435390661118817,
+      "defense_rating": -0.9823740175681905,
+      "home_offense": 25.425531914893618,
+      "home_defense": 23.80851063829787,
+      "away_offense": 22.791666666666668,
+      "away_defense": 24.458333333333332,
+      "games": 103
+    },
+    "NE": {
+      "offense_rating": -2.0738795518207276,
+      "defense_rating": 1.4268207282913181,
+      "home_offense": 20.80851063829787,
+      "home_defense": 20.72340425531915,
+      "away_offense": 20.4375,
+      "away_defense": 21.895833333333332,
+      "games": 102
+    },
+    "WAS": {
+      "offense_rating": -0.8797619047619065,
+      "defense_rating": -1.8821428571428562,
+      "home_offense": 21.1875,
+      "home_defense": 23.9375,
+      "away_offense": 22.5,
+      "away_defense": 25.66,
+      "games": 105
+    },
+    "CIN": {
+      "offense_rating": 1.2062194036493104,
+      "defense_rating": -0.8884623943035166,
+      "home_offense": 26.489795918367346,
+      "home_defense": 24.693877551020407,
+      "away_offense": 22.16,
+      "away_defense": 23.24,
+      "games": 107
+    },
+    "NO": {
+      "offense_rating": -0.7749075358298647,
+      "defense_rating": 1.5613153028201587,
+      "home_offense": 23.0,
+      "home_defense": 21.612244897959183,
+      "away_offense": 20.95744680851064,
+      "away_defense": 20.680851063829788,
+      "games": 103
+    },
+    "SF": {
+      "offense_rating": 1.9293290043290057,
+      "defense_rating": 1.4070346320346339,
+      "home_offense": 25.24,
+      "home_defense": 21.18,
+      "away_offense": 24.358490566037737,
+      "away_defense": 21.264150943396228,
+      "games": 110
+    },
+    "LA": {
+      "offense_rating": 0.42932900432900567,
+      "defense_rating": 1.6797619047619037,
+      "home_offense": 23.653061224489797,
+      "home_defense": 19.755102040816325,
+      "away_offense": 23.18867924528302,
+      "away_defense": 22.41509433962264,
+      "games": 110
+    },
+    "NYG": {
+      "offense_rating": -4.8040337494221,
+      "defense_rating": -1.0600439204808119,
+      "home_offense": 16.847826086956523,
+      "home_defense": 21.891304347826086,
+      "away_offense": 18.44,
+      "away_defense": 25.88,
+      "games": 103
+    },
+    "DEN": {
+      "offense_rating": -1.9758403361344534,
+      "defense_rating": 1.132703081232492,
+      "home_offense": 22.21276595744681,
+      "home_defense": 19.638297872340427,
+      "away_offense": 19.270833333333332,
+      "away_defense": 23.583333333333332,
+      "games": 102
+    },
+    "CLE": {
+      "offense_rating": -2.0778388278388285,
+      "defense_rating": -0.6721611721611715,
+      "home_offense": 20.695652173913043,
+      "home_defense": 18.91304347826087,
+      "away_offense": 20.9,
+      "away_defense": 28.26,
+      "games": 104
+    },
+    "CHI": {
+      "offense_rating": -2.3876050420168085,
+      "defense_rating": -0.8476890756302531,
+      "home_offense": 21.456521739130434,
+      "home_defense": 20.82608695652174,
+      "away_offense": 19.583333333333332,
+      "away_defense": 27.0625,
+      "games": 102
+    },
+    "DAL": {
+      "offense_rating": 3.5392857142857146,
+      "defense_rating": -0.9773809523809511,
+      "home_offense": 30.1875,
+      "home_defense": 25.708333333333332,
+      "away_offense": 23.612244897959183,
+      "away_defense": 22.510204081632654,
+      "games": 105
+    },
+    "GB": {
+      "offense_rating": 2.383789497107255,
+      "defense_rating": 1.513406764574988,
+      "home_offense": 25.56,
+      "home_defense": 18.6,
+      "away_offense": 25.591836734693878,
+      "away_defense": 24.183673469387756,
+      "games": 107
+    },
+    "IND": {
+      "offense_rating": 1.3574929971988787,
+      "defense_rating": -0.5731792717086819,
+      "home_offense": 25.75,
+      "home_defense": 22.854166666666668,
+      "away_offense": 22.829787234042552,
+      "away_defense": 24.085106382978722,
+      "games": 102
+    },
+    "MIA": {
+      "offense_rating": 0.38043226999537794,
+      "defense_rating": 0.10500462320850801,
+      "home_offense": 25.02127659574468,
+      "home_defense": 19.53191489361702,
+      "away_offense": 21.53061224489796,
+      "away_defense": 25.775510204081634,
+      "games": 103
+    },
+    "NYJ": {
+      "offense_rating": -4.94312824139557,
+      "defense_rating": -1.2647925506836408,
+      "home_offense": 18.729166666666668,
+      "home_defense": 22.8125,
+      "away_offense": 16.68888888888889,
+      "away_defense": 26.266666666666666,
+      "games": 101
+    },
+    "PHI": {
+      "offense_rating": 2.7384199134199143,
+      "defense_rating": 0.7161255411255425,
+      "home_offense": 27.79245283018868,
+      "home_defense": 22.30188679245283,
+      "away_offense": 23.857142857142858,
+      "away_defense": 22.040816326530614,
+      "games": 110
+    },
+    "PIT": {
+      "offense_rating": -1.7369047619047606,
+      "defense_rating": 1.317857142857143,
+      "home_offense": 22.208333333333332,
+      "home_defense": 19.8125,
+      "away_offense": 20.122448979591837,
+      "away_defense": 23.367346938775512,
+      "games": 105
+    },
+    "TB": {
+      "offense_rating": 2.6481660231660236,
+      "defense_rating": 1.4689510939510946,
+      "home_offense": 25.903846153846153,
+      "home_defense": 20.96153846153846,
+      "away_offense": 25.666666666666668,
+      "away_defense": 21.745098039215687,
+      "games": 111
+    },
+    "TEN": {
+      "offense_rating": -2.0273347202958867,
+      "defense_rating": -0.8076167360147934,
+      "home_offense": 21.875,
+      "home_defense": 22.3125,
+      "away_offense": 19.851063829787233,
+      "away_defense": 25.617021276595743,
+      "games": 103
+    },
+    "ARI": {
+      "offense_rating": -0.2797619047619051,
+      "defense_rating": -0.9261204481792724,
+      "home_offense": 23.97826086956522,
+      "home_defense": 25.695652173913043,
+      "away_offense": 21.645833333333332,
+      "away_defense": 22.5625,
+      "games": 102
+    },
+    "HOU": {
+      "offense_rating": -2.165476190476191,
+      "defense_rating": -0.5678571428571431,
+      "home_offense": 22.26530612244898,
+      "home_defense": 23.73469387755102,
+      "away_offense": 19.083333333333332,
+      "away_defense": 23.5625,
+      "games": 105
+    },
+    "LAC": {
+      "offense_rating": 0.8464516874711059,
+      "defense_rating": -0.4095584835876096,
+      "home_offense": 24.104166666666668,
+      "home_defense": 23.666666666666668,
+      "away_offense": 23.375,
+      "away_defense": 22.875,
+      "games": 103
+    },
+    "SEA": {
+      "offense_rating": 1.2250924641701353,
+      "defense_rating": 0.39626675913083886,
+      "home_offense": 24.604166666666668,
+      "home_defense": 22.0625,
+      "away_offense": 24.19148936170213,
+      "away_defense": 23.23404255319149,
+      "games": 103
+    },
+    "LV": {
+      "offense_rating": -1.652310924369747,
+      "defense_rating": -1.720238095238095,
+      "home_offense": 23.347826086956523,
+      "home_defense": 24.23913043478261,
+      "away_offense": 19.333333333333332,
+      "away_defense": 25.645833333333332,
+      "games": 102
+    }
+  }
+}
